@@ -24,11 +24,20 @@ class Birthday(Field):
         except ValueError:
             raise ValueError("Invalid date format. Use DD.MM.YYYY")
 
+
+class Address(Field):
+    def __init__(self, value):
+        if not value:
+            raise ValueError("Address cannot be empty")
+        else:
+            super().__init__(value)
+
 class Record:
     def __init__(self, name):
         self.name = Name(name)
         self.phones = []
         self.birthday = None
+        self.address = None
 
     def add_phone(self, phone):
         self.phones.append(Phone(phone))
@@ -49,15 +58,27 @@ class Record:
         for p in self.phones:
             if p.value == phone:
                 return p
-            return None
+        # має повертатись один раз, а не в циклі
+        return None
 
     def add_birthday(self, birthday):
         self.birthday = Birthday(birthday)
+
+    def add_address(self, address):
+        self.address = Address(address)
  
+    def edit_address(self, address):
+        self.address = Address(address)
+
+    def show_address(self):
+        return self.address.value if self.address else "No address set"
+
+
     def __str__(self):
         phones = '; '.join(p.value for p in self.phones)
         bday = f", Birthday: {self.birthday.value.strftime('%d.%m.%Y')}" if self.birthday else "" 
-        return f"Contact name: {self.name.value}, phones: {phones}{bday}"
+        address = f", Address: {self.address.value}" if self.address else ""
+        return f"Contact name: {self.name.value}, phones: {phones}{bday}{address}"
     
 class AddressBook(UserDict):
     def add_record(self, record):

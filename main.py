@@ -2,7 +2,8 @@ from storage import load_book, save_book, FILENAME
 from handlers import (
     add_contact, change_contact, delete_contact,
     show_phone, add_birthday, show_birthday,
-    birthdays, show_all, show_help
+    birthdays, show_all, show_help, add_address,
+    show_address, edit_address
 )
 
 
@@ -24,6 +25,9 @@ def main():
         "add-birthday": add_birthday,
         "show-birthday": show_birthday,
         "birthdays": birthdays,  
+        "add-address": add_address,
+        "show-address": show_address,
+        "edit-address": edit_address,
         "all": lambda args, book: show_all(book),  
     }
     
