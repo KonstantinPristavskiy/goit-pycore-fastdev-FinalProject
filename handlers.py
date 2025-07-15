@@ -80,19 +80,61 @@ def show_all(book: AddressBook):
     if not book.data:
         return "📭 Address book is empty."
 
-    return '\n'.join(str(record) for record in book.data.values()) if book.data else "📭 Address book is empty."
+    return '\n'.join(str(record) for record in book.data.values())
+
+
+@input_error
+def add_address(args, book: AddressBook):
+    if len(args) < 2:
+        return "❌ Please provide both name and address."
+    name = args[0]
+    address = ' '.join(args[1:])
+    record = book.find(name)
+    if record:
+        record.add_address(address)
+        return f"📍 Address added for '{name}'."
+    return f"❌ Contact '{name}' not found."
+
+
+@input_error
+def show_address(args, book: AddressBook):
+    name = args[0]
+    record = book.find(name)
+    if record and record.address:
+        return f"📍 {name}'s address: {record.address.value}."
+    elif record:
+        return f"⚠️ {name} does not have an address set."
+    else:
+        return f"❌ Contact '{name}' not found."
+
+
+@input_error
+def edit_address(args, book: AddressBook):
+    if len(args) < 2:
+        return "❌ Please provide both name and address."
+    name = args[0]
+    address = ' '.join(args[1:])
+    record = book.find(name)
+    if record:
+        record.edit_address(address)
+        return f"📍 Address updated for '{name}'."
+    return f"❌ Contact '{name}' not found."
+
 
 
 def show_help():
     return """📖 Available commands:
-- add <name> <phone>            Add new contact or phone to existing
-- change <name> <old> <new>     Change phone number
-- delete <name>                 Delete contact
-- phone <name>                  Show phones for contact
-- add-birthday <name> <DD.MM.YYYY> Add birthday
-- show-birthday <name>          Show birthday
-- birthdays                     Show birthdays in next 7 days
-- all                           Show all contacts
-- help                          Show this help
-- close / exit                  Save and exit
+- add <name> <phone>                Add new contact or phone to existing
+- change <name> <old> <new>         Change phone number
+- delete <name>                     Delete contact
+- phone <name>                      Show phones for contact
+- add-birthday <name> <DD.MM.YYYY>  Add birthday
+- show-birthday <name>              Show birthday
+- add-address <name> <address>      Add address to contact
+- show-address <name>               Show address for contact
+- edit-address <name> <address>     Edit address for contact
+- birthdays                         Show birthdays in next 7 days
+- all                               Show all contacts
+- help                              Show this help
+- close / exit                      Save and exit
 """
