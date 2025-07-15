@@ -13,50 +13,60 @@ def parse_input(user_input):
 
 def main():
     book = load_book()
+
+
+    # Словник команд для яких потрібні аргументи
+    commands = {
+        "add": add_contact,
+        "change": change_contact,
+        "phone": show_phone,
+        "delete": delete_contact,   
+        "add-birthday": add_birthday,
+        "show-birthday": show_birthday,
+        "birthdays": birthdays,  
+        "all": lambda args, book: show_all(book),  
+    }
+    
+
+
     print("👋 Welcome to the assistant bot!")
 
-    while True:
-        user_input = input("📝 Enter a command: ")
-        command, args = parse_input(user_input)
 
-        if command in ["close", "exit"]:
-            save_book(book)
-            print(f"✅ Contacts saved to {FILENAME}")
-            print("👋 Good bye!")
-            break
 
-        elif command == "hello":
-            print("🤖 How can I help you?")
 
-        elif command == "add":
-            print(add_contact(args, book))
+    try:
+        while True:
+            user_input = input("📝 Enter a command: ")
+            command, args = parse_input(user_input)  
 
-        elif command == "change":
-            print(change_contact(args, book))
+            if command in (None, ""):
+                print("Enter a command.")
+                continue
 
-        elif command == "delete":
-            print(delete_contact(args, book))
+            elif command in ["close", "exit"]:
+                print("Good bye!")
+                break
 
-        elif command == "phone":
-            print(show_phone(args, book))
+            elif command == "help":
+                print(show_help())
 
-        elif command == "add-birthday":
-            print(add_birthday(args, book))
+            elif command == "hello":
+                print("How can I help you?")
 
-        elif command == "show-birthday":
-            print(show_birthday(args, book))
+            elif command in commands:
+                print(commands[command](args, book))
 
-        elif command == "birthdays":
-            print(birthdays(args, book))
+            else:
+                print("❗ Invalid command. Type 'help' to see available commands.")
+    except KeyboardInterrupt:
+        # Якщо користувач натисне Ctrl+C
+        print("\n⚠️ Interrupted by user.")
+    finally:
+        # зберігаємо стан у файл в будь якому випадку
+        print(f"✅ Contacts saved to {FILENAME}")
+        print("👋 Good bye!")
+        save_book(book)
 
-        elif command == "all":
-            print(show_all(book))
-
-        elif command in ["help", "?"]:
-            print(show_help())
-
-        else:
-            print("❗ Invalid command. Type 'help' to see available commands.")
 
 
 if __name__ == "__main__":
