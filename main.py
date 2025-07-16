@@ -7,6 +7,7 @@ from handlers import (
     add_email, remove_email,
     show_all, show_help
 )
+from guesser import guess_command
 
 
 def parse_input(user_input):
@@ -68,7 +69,12 @@ def main():
                 print(commands[command](args, book))
 
             else:
-                print("❗ Invalid command. Type 'help' to see available commands.")
+                suggestion = guess_command(command)
+                if suggestion:
+                    print(f"❓ Unknown command '{command}'. Можливо ви мали на увазі: '{suggestion}'?")
+                else:
+                    print("❗ Invalid command. Type 'help' to see available commands.")
+
     except KeyboardInterrupt:
         # Якщо користувач натисне Ctrl+C
         print("\n⚠️ Interrupted by user.")
