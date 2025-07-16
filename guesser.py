@@ -2,26 +2,23 @@
 
 import difflib
 
+# Список команд з урахуванням ієрархії
 KNOWN_COMMANDS = [
-    "add",
-    "show",
-    "delete",
-    "add-phone",
-    "remove-phone",
-    "set-birthday",
-    "remove-birthday",
-    "birthdays",
-    "set-address",
-    "remove-address",
-    "set-email",
-    "remove-email",
-    "all",
-    "help",
-    "exit",
-    "close",
-    "hello"
+    "contact set", "contact get", "contact delete",
+    "note add", "note delete", "note show", "note find",
+    "help", "exit", "close"
 ]
 
-def guess_command(user_input: str) -> str | None:
-    guess = difflib.get_close_matches(user_input, KNOWN_COMMANDS, n=1, cutoff=0.6)
+
+def guess_command(command: str, sub_command: str | None) -> str | None:
+    """
+    Повертає найбільш схожу команду, якщо користувач зробив помилку.
+    Підтримує як command, так і pair 'command sub_command'.
+    """
+    if command == "contact" and sub_command:
+        input_combo = f"{command} {sub_command}"
+    else:
+        input_combo = command
+
+    guess = difflib.get_close_matches(input_combo, KNOWN_COMMANDS, n=1, cutoff=0.6)
     return guess[0] if guess else None
