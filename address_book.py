@@ -1,5 +1,6 @@
 from collections import UserDict
 from datetime import datetime
+import re
 
 class Field:
     def __init__(self, value):
@@ -32,12 +33,20 @@ class Address(Field):
         else:
             super().__init__(value)
 
+class Email(Field):
+    def __init__(self, value):
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', value):
+            raise ValueError("Invalid email format")
+        super().__init__(value)
+
+
 class Record:
     def __init__(self, name):
         self.name = Name(name)
         self.phones = []
         self.birthday = None
         self.address = None
+        self.email = None
 
     def add_phone(self, phone):
         self.phones.append(Phone(phone))
@@ -58,27 +67,32 @@ class Record:
         for p in self.phones:
             if p.value == phone:
                 return p
-        # має повертатись один раз, а не в циклі
         return None
 
     def add_birthday(self, birthday):
         self.birthday = Birthday(birthday)
 
+    def remove_birthday(self):
+        self.birthday = None
+
     def add_address(self, address):
         self.address = Address(address)
- 
-    def edit_address(self, address):
-        self.address = Address(address)
 
-    def show_address(self):
-        return self.address.value if self.address else "No address set"
+    def remove_address(self):
+        self.address = None
 
+    def add_email(self, email):
+        self.email = Email(email)
+
+    def remove_email(self):
+        self.email = None
 
     def __str__(self):
         phones = '; '.join(p.value for p in self.phones)
         bday = f", Birthday: {self.birthday.value.strftime('%d.%m.%Y')}" if self.birthday else "" 
         address = f", Address: {self.address.value}" if self.address else ""
-        return f"Contact name: {self.name.value}, phones: {phones}{bday}{address}"
+        email = f", Email: {self.email.value}" if self.email else ""
+        return f"Contact name: {self.name.value}, phones: {phones}{bday}{address}{email}"
     
 class AddressBook(UserDict):
     def add_record(self, record):
