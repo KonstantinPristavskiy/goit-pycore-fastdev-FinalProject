@@ -1,14 +1,19 @@
 from storage import load_book, save_book, FILENAME
 from handlers import (
-    add_contact, change_contact, delete_contact,
-    show_phone, add_birthday, show_birthday,
-    birthdays, show_all, show_help, add_address,
-    show_address, edit_address
+    add_name, show_contact, delete_contact,
+    add_phone, remove_phone, 
+    add_birthday, remove_birthday, birthdays,  
+    add_address, remove_address, 
+    add_email, remove_email,
+    show_all, show_help
 )
 
 
 def parse_input(user_input):
-    cmd, *args = user_input.strip().split()
+    stripped = user_input.strip()
+    if not stripped:
+        return "", []
+    cmd, *args = stripped.split()
     return cmd.lower(), args
 
 
@@ -18,16 +23,18 @@ def main():
 
     # Словник команд для яких потрібні аргументи
     commands = {
-        "add": add_contact,
-        "change": change_contact,
-        "phone": show_phone,
+        "add": add_name,
+        "show": show_contact,
         "delete": delete_contact,   
-        "add-birthday": add_birthday,
-        "show-birthday": show_birthday,
+        "add-phone": add_phone,
+        "remove-phone": remove_phone,
+        "set-birthday": add_birthday,
+        "remove-birthday": remove_birthday,
         "birthdays": birthdays,  
-        "add-address": add_address,
-        "show-address": show_address,
-        "edit-address": edit_address,
+        "set-address": add_address,
+        "remove-address": remove_address,
+        "set-email": add_email,
+        "remove-email": remove_email,
         "all": lambda args, book: show_all(book),  
     }
     
