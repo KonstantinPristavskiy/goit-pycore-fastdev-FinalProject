@@ -2,6 +2,7 @@ from storage import load_book, save_book, FILENAME
 from handlers import (
     contact_set, contact_get, contact_delete, show_help
 )
+from guesser import guess_command
 
 def parse_input(user_input):
     """
@@ -65,8 +66,12 @@ def main():
                     print("Invalid contact command. Use: set, get, delete, or help.")
             
             else:
-                print("❗ Invalid command. Type 'help' to see available commands.")
-                
+                suggestion = guess_command(command)
+                if suggestion:
+                    print(f"❓ Unknown command '{command}'. Maybe you meant: '{suggestion}'?")
+                else:
+                    print("❗ Invalid command. Type 'help' to see available commands.")
+
     except KeyboardInterrupt:
         print("\n⚠️ Interrupted by user.")
     finally:
