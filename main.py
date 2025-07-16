@@ -66,11 +66,12 @@ def main():
                     print("Invalid contact command. Use: set, get, delete, or help.")
             
             else:
-                suggestion = guess_command(command)
+                suggestion = guess_command(command, sub_command)
                 if suggestion:
-                    print(f"❓ Unknown command '{command}'. Maybe you meant: '{suggestion}'?")
+                    print(f"❓ Unknown command '{command} {sub_command or ''}'. Maybe you meant: '{suggestion}'?")
                 else:
                     print("❗ Invalid command. Type 'help' to see available commands.")
+
 
     except KeyboardInterrupt:
         print("\n⚠️ Interrupted by user.")
