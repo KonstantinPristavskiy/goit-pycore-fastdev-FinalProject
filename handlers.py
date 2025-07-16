@@ -1,169 +1,133 @@
 from address_book import Record, AddressBook
 from decorators import input_error
 
-
 @input_error
-def add_name(args, book: AddressBook):
-    name, *_ = args
-    record = book.find(name)
-    if record:
-        return f"🔁 Contact '{name}' already exists."
-    else:
+def contact_set(args, book: AddressBook):
+    """
+    Обробляє команду 'contact set'.
+    - Якщо передано тільки ім'я, створює новий контакт.
+    - Якщо передано ім'я, поле та значення, додає/оновлює поле для контакту.
+    """
+    if not args:
+        return "Usage: contact set <name> or contact set <name> <field> <value>"
+
+    field_keywords = ['phone', 'email', 'address', 'birthday']
+    field = None
+    field_index = -1
+
+    # Пошук ключового слова поля (phone, email і т.д.) в аргументах,
+    # щоб відокремити ім'я від інших частин команди.
+    for i, part in enumerate(args):
+        if part.lower() in field_keywords:
+            field = part.lower()
+            field_index = i
+            break
+    
+    # Якщо поле не знайдено, команда розглядається як 'contact set <name>'.
+    if not field:
+        name = " ".join(args)
+        if book.find(name):
+            return f"❌ Contact '{name}' already exists."
         record = Record(name)
         book.add_record(record)
-        return f"✅ Contact '{name}' added."
+        return f"✅ Contact '{name}' created."
 
+    # Якщо поле знайдено, розбираємо ім'я та значення.
+    name = " ".join(args[:field_index])
+    value_parts = args[field_index + 1:]
+
+    if not name:
+        return "❌ Contact name is missing."
+    if not value_parts:
+        return f"❌ Value for field '{field}' is missing."
+
+    record = book.find(name)
+    created_msg = ""
+    if not record:
+        record = Record(name)
+        book.add_record(record)
+        created_msg = f"✅ Contact '{name}' created. "
+
+    if field == 'phone':
+        record.add_phone(value_parts[0])
+        return created_msg + f"📞 Phone {value_parts[0]} added to '{name}'."
+    elif field == 'email':
+        record.set_email(value_parts[0])
+        return created_msg + f"✉️ Email for '{name}' set."
+    elif field == 'address':
+        value = " ".join(value_parts)
+        record.set_address(value)
+        return created_msg + f"📍 Address for '{name}' set."
+    elif field == 'birthday':
+        record.set_birthday(value_parts[0])
+        return created_msg + f"🎉 Birthday for '{name}' set."
 
 @input_error
-def show_contact(args, book: AddressBook):
-    name = args[0]
-    record = book.find(name)
+def contact_get(args, book: AddressBook):
+    """
+    Обробляє команду 'contact get'.
+    - 'birthdays [days]': показує майбутні дні народження.
+    - 'all': показує всі контакти.
+    - '<query>': шукає контакти за запитом.
+    """
+    if not args:
+        return "Usage: contact get <name|all|birthdays [days]|query>"
+
+    # Обробка команди 'birthdays'
+    if args[0].lower() == 'birthdays':
+        days = 7
+        if len(args) > 1:
+            try:
+                days = int(args[1])
+                if days <= 0:
+                    return "❌ Please enter a positive number of days."
+            except ValueError:
+                return "❌ Invalid number of days. Please provide an integer."
+        
+        upcoming = book.get_upcoming_birthdays(days)
+        if upcoming:
+            return f"🎉 Upcoming birthdays in the next {days} days:\n" + "\n".join(upcoming)
+        return f"🎉 No birthdays in the next {days} days."
+
+    # Обробка команди 'all'
+    if len(args) == 1 and args[0].lower() == 'all':
+        if not book.data:
+            return "📭 Address book is empty."
+        return '\n'.join(str(record) for record in book.data.values())
+
+    # Пошук за іменем або іншими полями
+    query = " ".join(args)
+    record = book.find(query)
     if record:
         return str(record)
-    return f"❌ Contact '{name}' not found."
 
-
+    results = book.search_contacts(query)
+    if results:
+        return "🔎 Found contacts:\n" + "\n".join(str(record) for record in results)
+    
+    return f"❌ No contacts found for '{query}'."
 
 @input_error
-def delete_contact(args, book: AddressBook):
-    name = args[0]
+def contact_delete(args, book: AddressBook):
+    """Видаляє контакт за іменем."""
+    if not args:
+        return "Usage: contact delete <name>"
+    name = " ".join(args)
     if book.find(name):
         book.delete(name)
         return f"🗑️ Contact '{name}' deleted."
     else:
         return f"❌ Contact '{name}' not found."
 
-
-
-
-
-@input_error
-def add_phone(args, book: AddressBook):
-    name, phone, *_ = args
-    record = book.find(name)
-    if record:
-        record.add_phone(phone)
-        return f"🔁 Phone number {phone} added to '{name}'."
-    else:
-        return f"❌ Contact '{name}' not found."
-
-
-
-@input_error
-def remove_phone(args, book: AddressBook):
-    name, phone = args
-    record = book.find(name)
-    if record:
-        phone_obj = record.find_phone(phone)
-        if phone_obj:
-            record.remove_phone(phone)
-            return f"🔁 Phone number {phone} removed from '{name}'."
-        else:
-            return f"❌ Phone number {phone} not found for '{name}'."
-    else:  
-        return f"❌ Contact '{name}' not found."
-
-
-
-@input_error
-def add_birthday(args, book: AddressBook):
-    name, birthday = args
-    record = book.find(name)
-    if record:
-        record.add_birthday(birthday)
-        return f"🎉 Birthday added for '{name}'."
-    return f"❌ Contact '{name}' not found."
-
-
-@input_error
-def remove_birthday(args, book: AddressBook):
-    name = args[0]
-    record = book.find(name)
-    if record:
-        record.remove_birthday()
-        return f"🎉 Birthday removed for '{name}'."
-    return f"❌ Contact '{name}' not found."
-
-
-
-@input_error
-def birthdays(args, book: AddressBook):
-    upcoming = book.get_upcoming_birthdays()
-    if upcoming:
-        return "🎉 Upcoming birthdays:\n" + "\n".join(upcoming)
-    return "🎉 No birthdays in the next week."
-
-
-@input_error
-def show_all(book: AddressBook):
-    if not book.data:
-        return "📭 Address book is empty."
-
-    return '\n'.join(str(record) for record in book.data.values())
-
-
-@input_error
-def add_address(args, book: AddressBook):
-    if len(args) < 2:
-        return "❌ Please provide both name and address."
-    name = args[0]
-    address = ' '.join(args[1:])
-    record = book.find(name)
-    if record:
-        record.add_address(address)
-        return f"📍 Address added for '{name}'."
-    return f"❌ Contact '{name}' not found."
-
-
-
-@input_error
-def remove_address(args, book: AddressBook):
-    name = args[0]
-    record = book.find(name)
-    if record:
-        record.remove_address()
-        return f"📍 Address removed for '{name}'."
-    return f"❌ Contact '{name}' not found."
-
-
-@input_error
-def add_email(args, book: AddressBook):
-    name, email = args
-    record = book.find(name)
-    if record:
-        record.add_email(email)
-        return f"✉️ Email added for '{name}'."
-    return f"❌ Contact '{name}' not found."
-
-
-@input_error
-def remove_email(args, book: AddressBook):
-    name = args[0]
-    record = book.find(name)
-    if record:
-        record.remove_email()
-        return f"✉️ Email removed for '{name}'."
-    return f"❌ Contact '{name}' not found."
-
-
-
-
-
 def show_help():
+    """Показує довідку по командам."""
     return """📖 Available commands:
-- add <name>                        Add new contact
-- show <name>                       Show contact
-- delete <name>                     Delete contact
-- add-phone <name> <phone>          Add phone to contact
-- remove-phone <name> <phone>       Remove phone from contact
-- set-address <name> <address>      Set address for contact
-- remove-address <name>             Remove address from contact
-- set-email <name> <email>          Set email for contact
-- remove-email <name>               Remove email from contact
-- set-birthday <name> <DD.MM.YYYY>  Set birthday for contact (DD.MM.YYYY)
-- remove-birthday <name>            Remove birthday from contact
-- birthdays                         Show birthdays in next 7 days
-- all                               Show all contacts
-- help                              Show this help
-- close / exit                      Save and exit
+- contact set <name>                  - Create a new contact
+- contact set <name> <field> <value>  - Add/Update contact field (phone, email, address, birthday)
+- contact get <name|all|search_query> - Get contact info
+- contact get birthdays [days]        - Show birthdays in the next 7 days (or specified days)
+- contact delete <name>               - Delete a contact
+- help                              - Show this help
+- close / exit                      - Save and exit
 """
+
