@@ -1,86 +1,78 @@
 from storage import load_book, save_book, FILENAME
 from handlers import (
-    add_name, show_contact, delete_contact,
-    add_phone, remove_phone, 
-    set_birthday, remove_birthday, birthdays,  
-    set_address, remove_address, 
-    set_email, remove_email,
-    show_all, show_help, search_contacts, edit_contact
+    contact_set, contact_get, contact_delete, show_help
 )
 
-
 def parse_input(user_input):
+    """
+    Розбирає введений рядок на основну команду, підкоманду та аргументи.
+    Приклад: "contact set John phone 123" -> ('contact', 'set', ['John', 'phone', '123'])
+    """
     stripped = user_input.strip()
     if not stripped:
-        return "", []
-    cmd, *args = stripped.split()
-    return cmd.lower(), args
+        return None, None, []
+    
+    parts = stripped.split()
+    command = parts[0].lower()
+    
+    # Якщо команда не 'contact', то підкоманди немає.
+    if command != 'contact':
+        return command, None, parts[1:]
 
+    # Якщо команда 'contact', але немає підкоманди.
+    if len(parts) < 2:
+        return command, None, []
+
+    sub_command = parts[1].lower()
+    args = parts[2:]
+    return command, sub_command, args
 
 def main():
     book = load_book()
 
-
-    # Словник команд для яких потрібні аргументи
-    commands = {
-        "add": add_name,
-        "show": show_contact,
-        "delete": delete_contact,   
-        "add-phone": add_phone,
-        "remove-phone": remove_phone,
-        "set-birthday": set_birthday,
-        "remove-birthday": remove_birthday,
-        "birthdays": birthdays,  
-        "set-address": set_address,
-        "remove-address": remove_address,
-        "set-email": set_email,
-        "remove-email": remove_email,
-        "search-contacts": search_contacts,
-        "edit-contact": edit_contact,
-        "all": lambda args, book: show_all(book),  
+    # Словник для команд, що стосуються контактів
+    contact_commands = {
+        "set": contact_set,
+        "get": contact_get,
+        "delete": contact_delete,
     }
+
+    # тут потрібно створити словники для команд note
+
     
-
-
     print("👋 Welcome to the assistant bot!")
-
-
-
 
     try:
         while True:
             user_input = input("📝 Enter a command: ")
-            command, args = parse_input(user_input)  
+            command, sub_command, args = parse_input(user_input)
 
-            if command in (None, ""):
-                print("Enter a command.")
+            if not command:
                 continue
 
-            elif command in ["close", "exit"]:
+            if command in ["close", "exit"]:
                 print("Good bye!")
                 break
 
             elif command == "help":
                 print(show_help())
-
-            elif command == "hello":
-                print("How can I help you?")
-
-            elif command in commands:
-                print(commands[command](args, book))
-
+            
+            # Виклик обробників для команди 'contact'
+            elif command == 'contact':
+                if sub_command in contact_commands:
+                    print(contact_commands[sub_command](args, book))
+                else:
+                    print("Invalid contact command. Use: set, get, delete, or help.")
+            
             else:
                 print("❗ Invalid command. Type 'help' to see available commands.")
+                
     except KeyboardInterrupt:
-        # Якщо користувач натисне Ctrl+C
         print("\n⚠️ Interrupted by user.")
     finally:
-        # зберігаємо стан у файл в будь якому випадку
         print(f"✅ Contacts saved to {FILENAME}")
         print("👋 Good bye!")
         save_book(book)
-
-
 
 if __name__ == "__main__":
     main()
