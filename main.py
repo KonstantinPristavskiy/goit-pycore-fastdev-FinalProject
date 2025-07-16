@@ -63,7 +63,12 @@ def main():
                 if sub_command in contact_commands:
                     print(contact_commands[sub_command](args, book))
                 else:
-                    print("Invalid contact command. Use: set, get, delete, or help.")
+                    suggestion = guess_command(command, sub_command)
+                    if suggestion:
+                        print(f"❓ Unknown contact command '{sub_command}'. Maybe you meant: '{suggestion}'?")
+                    else:
+                        print("Invalid contact command. Use: set, get, delete, or help.")
+
             
             else:
                 suggestion = guess_command(command, sub_command)
