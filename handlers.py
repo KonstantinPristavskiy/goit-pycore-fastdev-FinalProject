@@ -60,17 +60,17 @@ def remove_phone(args, book: AddressBook):
             return f"🔁 Phone number {phone} removed from '{name}'."
         else:
             return f"❌ Phone number {phone} not found for '{name}'."
-    else:  
+    else:
         return f"❌ Contact '{name}' not found."
 
 
 
 @input_error
-def add_birthday(args, book: AddressBook):
+def set_birthday(args, book: AddressBook):
     name, birthday = args
     record = book.find(name)
     if record:
-        record.add_birthday(birthday)
+        record.set_birthday(birthday)
         return f"🎉 Birthday added for '{name}'."
     return f"❌ Contact '{name}' not found."
 
@@ -103,14 +103,14 @@ def show_all(book: AddressBook):
 
 
 @input_error
-def add_address(args, book: AddressBook):
+def set_address(args, book: AddressBook):
     if len(args) < 2:
         return "❌ Please provide both name and address."
     name = args[0]
     address = ' '.join(args[1:])
     record = book.find(name)
     if record:
-        record.add_address(address)
+        record.set_address(address)
         return f"📍 Address added for '{name}'."
     return f"❌ Contact '{name}' not found."
 
@@ -127,11 +127,11 @@ def remove_address(args, book: AddressBook):
 
 
 @input_error
-def add_email(args, book: AddressBook):
+def set_email(args, book: AddressBook):
     name, email = args
     record = book.find(name)
     if record:
-        record.add_email(email)
+        record.set_email(email)
         return f"✉️ Email added for '{name}'."
     return f"❌ Contact '{name}' not found."
 
@@ -162,8 +162,69 @@ def show_help():
 - remove-email <name>               Remove email from contact
 - set-birthday <name> <DD.MM.YYYY>  Set birthday for contact (DD.MM.YYYY)
 - remove-birthday <name>            Remove birthday from contact
+- edit-contact <name> <field> <new_value> Edit contact's field (phone, address, email, birthday)
+- search-contacts <query>           Search contacts by name, phone, etc.
 - birthdays                         Show birthdays in next 7 days
 - all                               Show all contacts
 - help                              Show this help
 - close / exit                      Save and exit
 """
+@input_error
+def search_contacts(args, book: AddressBook):
+    query = " ".join(args)
+    if not query:
+        return "Please enter a search term."
+    results = book.search_contacts(query)
+    if results:
+        return "🔎 Found contacts:\n" + "\n".join(str(record) for record in results)
+    return "❌ No contacts found for your search."
+
+
+@input_error
+def edit_contact(args, book: AddressBook):
+    if len(args) < 3:
+        return "❌ Invalid command. Use: edit-contact <name> <field> <new_value>"
+
+    name, field, *value_parts = args
+    field = field.lower()
+    
+    record = book.find(name)
+    if not record:
+        return f"❌ Contact '{name}' not found."
+
+    if field == 'phone':
+        if len(value_parts) != 2:
+            return "❌ For phone, please provide old and new numbers. Usage: edit-contact <name> phone <old_phone> <new_phone>"
+        old_phone, new_phone = value_parts
+        
+        phone_to_edit = record.find_phone(old_phone)
+        if not phone_to_edit:
+            return f"❌ Phone number {old_phone} not found for '{name}'."
+        
+        record.edit_phone(old_phone, new_phone)
+        return f"📞 Phone for '{name}' updated from {old_phone} to {new_phone}."
+
+    elif field == 'address':
+        address = " ".join(value_parts)
+        if not address:
+             return "❌ Address cannot be empty."
+        record.set_address(address)
+        return f"📍 Address for '{name}' updated."
+    
+    elif field == 'email':
+        if len(value_parts) != 1:
+            return "❌ Please provide a single email address."
+        email = value_parts[0]
+        record.set_email(email)
+        return f"✉️ Email for '{name}' updated."
+        
+    elif field == 'birthday':
+        if len(value_parts) != 1:
+            return "❌ Please provide a single birthday in DD.MM.YYYY format."
+        birthday = value_parts[0]
+        record.set_birthday(birthday)
+        return f"🎉 Birthday for '{name}' updated."
+        
+    else:
+        return f"❌ Invalid field '{field}'. Available fields: phone, address, email, birthday."
+

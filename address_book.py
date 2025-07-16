@@ -69,19 +69,19 @@ class Record:
                 return p
         return None
 
-    def add_birthday(self, birthday):
+    def set_birthday(self, birthday):
         self.birthday = Birthday(birthday)
 
     def remove_birthday(self):
         self.birthday = None
 
-    def add_address(self, address):
+    def set_address(self, address):
         self.address = Address(address)
 
     def remove_address(self):
         self.address = None
 
-    def add_email(self, email):
+    def set_email(self, email):
         self.email = Email(email)
 
     def remove_email(self):
@@ -117,6 +117,23 @@ class AddressBook(UserDict):
                 if 0 <= delta <= 7:
                     upcoming.append(f"{record.name.value} ({bday.strftime('%d.%m')})")
         return upcoming
+
+    def search_contacts(self, query):
+        results = set()
+        query = query.lower()
+        for record in self.data.values():
+            if query in record.name.value.lower():
+                results.add(record)
+            for phone in record.phones:
+                if query in phone.value:
+                    results.add(record)
+            if record.address and query in record.address.value.lower():
+                results.add(record)
+            if record.email and query in record.email.value.lower():
+                results.add(record)
+            if record.birthday and query in record.birthday.value.strftime('%d.%m.%Y'):
+                results.add(record)
+        return list(results)
 
         
             
