@@ -1,5 +1,6 @@
 from address_book import Record, AddressBook
 from decorators import input_error
+from notebook import Note, NoteBook
 
 @input_error
 def contact_set(args, book: AddressBook):
@@ -154,6 +155,114 @@ def contact_delete(args, book: AddressBook):
             return f"❌ For 3 arguments, only 'phone <number>' is supported"
     
     return "❌ Wrong arguments. Use: contact delete <name> [field] [value]"
+@input_error
+def note_set(args, notebook: NoteBook):
+    """
+    Створює або оновлює нотатку.
+    note set "title" "content" - створює нотатку
+    note set "title" tag "tag_name" - додає тег
+    note set "title" content "new_content" - оновлює зміст
+    """
+    if len(args) < 2:
+        return "Usage: note set \"title\" \"content\" OR note set \"title\" tag \"tag_name\""
+    
+    title = args[0]
+    
+    # Якщо нотатка не існує, створюємо нову
+    note = notebook.find_note(title)
+    if not note:
+        content = args[1] if len(args) >= 2 else ""
+        note = Note(title, content)
+        notebook.add_note(note)
+        return f"✅ Note '{title}' created"
+    
+    # Оновлення існуючої нотатки
+    if len(args) >= 3:
+        action = args[1].lower()
+        value = args[2]
+        
+        if action == "tag":
+            try:
+                note.add_tag(value)
+                return f"✅ Tag '#{value}' added to note '{title}'"
+            except ValueError as e:
+                return f"❌ {str(e)}"
+        
+        elif action == "content":
+            note.update_content(value)
+            return f"✅ Content updated for note '{title}'"
+    
+    return "❌ Invalid arguments"
+
+@input_error
+def note_get(args, notebook: NoteBook):
+    """
+    Показує нотатки.
+    note get all - всі нотатки
+    note get "title" - конкретна нотатка
+    note get search "query" - пошук за змістом
+    note get tag "tag_name" - пошук за тегом
+    """
+    if not args:
+        return "Usage: note get <all|title|search|tag> [value]"
+    
+    command = args[0].lower()
+    
+    if command == "all":
+        if not notebook.notes:
+            return "No notes found"
+        return '\n'.join(str(note) for note in notebook.notes.values())
+    
+    elif command == "search" and len(args) > 1:
+        query = args[1]
+        results = notebook.search_by_content(query)
+        if results:
+            return f"Found {len(results)} note(s):\n" + '\n'.join(str(note) for note in results)
+        return f"No notes found for query '{query}'"
+    
+    elif command == "tag" and len(args) > 1:
+        tag = args[1]
+        results = notebook.search_by_tags(tag)
+        if results:
+            return f"Notes with tag '#{tag}':\n" + '\n'.join(str(note) for note in results)
+        return f"No notes found with tag '#{tag}'"
+    
+    else:
+        # Пошук конкретної нотатки
+        title = args[0]
+        note = notebook.find_note(title)
+        if note:
+            return str(note)
+        return f"Note '{title}' not found"
+
+@input_error
+def note_delete(args, notebook: NoteBook):
+    """
+    Видаляє нотатку або тег.
+    note delete "title" - видаляє всю нотатку
+    note delete "title" tag "tag_name" - видаляє тег
+    """
+    if not args:
+        return "Usage: note delete \"title\" [tag \"tag_name\"]"
+    
+    title = args[0]
+    note = notebook.find_note(title)
+    if not note:
+        return f"Note '{title}' not found"
+    
+    # Видалення тегу
+    if len(args) == 3 and args[1].lower() == "tag":
+        tag_name = args[2]
+        note.remove_tag(tag_name)
+        return f"✅ Tag '#{tag_name}' removed from note '{title}'"
+    
+    # Видалення всієї нотатки
+    elif len(args) == 1:
+        notebook.delete_note(title)
+        return f"✅ Note '{title}' deleted"
+    
+    return "❌ Invalid arguments"
+
 
 def show_help():
     """Показує довідку по командам."""
@@ -182,4 +291,22 @@ Examples:
   contact delete John email
   contact delete John birthday
   contact delete John
+
+  NOTES:
+- note set "title" "content"        - Create note
+- note set "title" tag "tag_name"   - Add tag to note
+- note set "title" content "text"   - Update note content
+- note get all                      - Show all notes
+- note get "title"                  - Show specific note
+- note get search "query"           - Search notes by content
+- note get tag "tag_name"           - Find notes by tag
+- note delete "title"               - Delete entire note
+- note delete "title" tag "tag"     - Remove tag from note
+
+Examples:
+  note set "Shopping" "Buy milk and bread"
+  note set "Shopping" tag "urgent"
+  note get tag "work"
+  note get search "milk"
+  note delete "Shopping" tag "urgent"
 """

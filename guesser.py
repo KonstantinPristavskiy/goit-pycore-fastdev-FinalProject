@@ -5,7 +5,7 @@ import difflib
 # Список команд з урахуванням ієрархії
 KNOWN_COMMANDS = [
     "contact set", "contact get", "contact delete",
-    "note add", "note delete", "note show", "note find",
+    "note set", "note delete", "note get",
     "help", "exit", "close"
 ]
 
