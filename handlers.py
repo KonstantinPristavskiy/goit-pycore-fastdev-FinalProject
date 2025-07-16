@@ -7,7 +7,6 @@ def contact_set(args, book: AddressBook):
     Створює новий контакт або оновлює існуючий.
     contact set <name> - створює контакт
     contact set <name> <field> <value> - встановлює поле
-    contact set <name> phone <old_phone> <new_phone> - редагує телефон
     """
     if not args:
         return "Usage: contact set <name> [field] [value]"
@@ -46,27 +45,6 @@ def contact_set(args, book: AddressBook):
             return f"❌ Unknown field '{field}'. Use: phone, email, address, birthday"
         
         return f"✅ {field} set for '{name}'"
-    
-    # Якщо 4 аргументи - редагуємо телефон
-    if len(args) == 4:
-        field = args[1].lower()
-        old_phone = args[2]
-        new_phone = args[3]
-        
-        if field != 'phone':
-            return f"❌ Edit only works for phone. Use: contact set {name} phone <old> <new>"
-        
-        record = book.find(name)
-        if not record:
-            return f"❌ Contact '{name}' not found"
-        
-        # Перевіряємо чи є старий номер
-        if not record.find_phone(old_phone):
-            return f"❌ Phone '{old_phone}' not found for '{name}'"
-        
-        # Редагуємо телефон
-        record.edit_phone(old_phone, new_phone)
-        return f"✅ Phone changed from '{old_phone}' to '{new_phone}' for '{name}'"
     
     return "❌ Wrong number of arguments. Use: contact set <name> OR contact set <name> <field> <value>"
 
@@ -117,30 +95,78 @@ def contact_get(args, book: AddressBook):
 @input_error
 def contact_delete(args, book: AddressBook):
     """
-    Видаляє контакт.
-    contact delete John
+    Видаляє контакт або частину контакту.
+    contact delete John - видаляє весь контакт
+    contact delete John phone 1234567890 - видаляє телефон
+    contact delete John email - видаляє email
+    contact delete John address - видаляє адресу
+    contact delete John birthday - видаляє день народження
     """
     if not args:
-        return "Usage: contact delete <name>"
+        return "Usage: contact delete <name> [field] [value]"
     
     name = args[0]
-    if book.find(name):
+    record = book.find(name)
+    if not record:
+        return f"Contact '{name}' not found"
+    
+    # Якщо тільки ім'я - видаляємо весь контакт
+    if len(args) == 1:
         book.delete(name)
         return f"Contact '{name}' deleted"
     
-    return f"Contact '{name}' not found"
+    # Якщо 2 аргументи - видаляємо поле (email, address, birthday)
+    if len(args) == 2:
+        field = args[1].lower()
+        
+        if field == 'email':
+            if not record.email:
+                return f"'{name}' has no email to delete"
+            record.remove_email()
+            return f"Email deleted for '{name}'"
+        
+        elif field == 'address':
+            if not record.address:
+                return f"'{name}' has no address to delete"
+            record.remove_address()
+            return f"Address deleted for '{name}'"
+        
+        elif field == 'birthday':
+            if not record.birthday:
+                return f"'{name}' has no birthday to delete"
+            record.remove_birthday()
+            return f"Birthday deleted for '{name}'"
+        
+        else:
+            return f"❌ Unknown field '{field}'. Use: email, address, birthday, or 'phone <number>'"
+    
+    # Якщо 3 аргументи - видаляємо конкретний телефон
+    if len(args) == 3:
+        field = args[1].lower()
+        value = args[2]
+        
+        if field == 'phone':
+            if not record.find_phone(value):
+                return f"Phone '{value}' not found for '{name}'"
+            record.remove_phone(value)
+            return f"Phone '{value}' deleted for '{name}'"
+        else:
+            return f"❌ For 3 arguments, only 'phone <number>' is supported"
+    
+    return "❌ Wrong arguments. Use: contact delete <name> [field] [value]"
 
 def show_help():
     """Показує довідку по командам."""
     return """Available commands:
 - contact set <name>                 - Create new contact
 - contact set <name> <field> <value> - Set contact field
-- contact set <name> phone <old> <new> - Edit phone number
 - contact get all                    - Show all contacts  
 - contact get birthdays              - Show birthdays (7 days)
 - contact get birthdays <days>       - Show birthdays (custom days)
 - contact get <name>                 - Find contact
-- contact delete <name>              - Delete contact
+- contact delete <name>              - Delete entire contact
+- contact delete <name> <field>      - Delete field (email, address, birthday)
+- contact delete <name> phone <number> - Delete specific phone
 - help                               - Show this help
 - exit                               - Save and quit
 
@@ -150,8 +176,10 @@ Examples:
   contact set John
   contact set John phone 1234567890
   contact set John email john@example.com
-  contact set John phone 1234567890 0987654321
   contact get John
   contact get all
+  contact delete John phone 1234567890
+  contact delete John email
+  contact delete John birthday
   contact delete John
 """
