@@ -1,8 +1,10 @@
-from storage import load_book, save_book, FILENAME
+from storage import load_data, save_data, FILENAME
 from handlers import (
-    contact_set, contact_get, contact_delete, show_help
-)
+    contact_set, contact_get, contact_delete, show_help, note_set,
+    note_get, note_delete)
+from notebook import NoteBook 
 from guesser import guess_command
+from address_book import AddressBook
 
 def parse_input(user_input):
     """
@@ -17,7 +19,7 @@ def parse_input(user_input):
     command = parts[0].lower()
     
     # Якщо команда не 'contact', то підкоманди немає.
-    if command != 'contact':
+    if command != 'contact' and command != 'note':
         return command, None, parts[1:]
 
     # Якщо команда 'contact', але немає підкоманди.
@@ -29,18 +31,23 @@ def parse_input(user_input):
     return command, sub_command, args
 
 def main():
-    book = load_book()
+    data = load_data()  # Завантажуємо і контакти, і нотатки
+    book = data.get('contacts', AddressBook())
+    notebook = data.get('notes', NoteBook())
 
     # Словник для команд, що стосуються контактів
     contact_commands = {
         "set": contact_set,
-        "get": contact_get,
+        "get": contact_get, 
         "delete": contact_delete,
     }
 
-    # тут потрібно створити словники для команд note
-
-    
+    # Словник для команд, що стосуються нотаток
+    note_commands = {
+        "set": note_set,
+        "get": note_get,
+        "delete": note_delete,
+    }
     print("👋 Welcome to the assistant bot!")
 
     try:
@@ -68,6 +75,16 @@ def main():
                         print(f"❓ Unknown contact command '{sub_command}'. Maybe you meant: '{suggestion}'?")
                     else:
                         print("Invalid contact command. Use: set, get, delete, or help.")
+            # Виклик обробників для команди 'note'
+            elif command == 'note':
+                if sub_command in note_commands:
+                    print(note_commands[sub_command](args, notebook))
+                else:
+                    suggestion = guess_command(command, sub_command)
+                    if suggestion:
+                        print(f"❓ Unknown note command '{sub_command}'. Maybe you meant: '{suggestion}'?")
+                    else:
+                        print("Invalid note command. Use: set, get, delete, or help.")
 
             
             else:
@@ -83,7 +100,7 @@ def main():
     finally:
         print(f"✅ Contacts saved to {FILENAME}")
         print("👋 Good bye!")
-        save_book(book)
+        save_data({'contacts': book, 'notes': notebook})
 
 if __name__ == "__main__":
     main()
