@@ -1,0 +1,24 @@
+[project]
+name = "classbot"
+version = "0.1.0"
+description = "CLI Assistant for managing contacts and notes"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+authors = [
+    { name = "Костянтин П" },
+    { name = "Олександр Н" },
+    { name = "Ігор К" }
+]
+
+dependencies = [
+    "rich>=13.0.0"
+]
+
+[project.scripts]
+classbot = "classbot.main:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

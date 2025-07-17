@@ -1,6 +1,6 @@
 import pickle
-from address_book import AddressBook
-from notebook import NoteBook
+from classbot.address_book import AddressBook
+from classbot.notebook import NoteBook
 
 FILENAME = "address_book.pkl"
 
