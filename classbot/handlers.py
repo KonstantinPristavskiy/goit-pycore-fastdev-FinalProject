@@ -1,6 +1,7 @@
 from classbot.address_book import Record, AddressBook
 from classbot.decorators import input_error
 from classbot.notebook import Note, NoteBook
+from classbot.console import success, info, error
 
 @input_error
 def contact_set(args, book: AddressBook):
@@ -10,17 +11,17 @@ def contact_set(args, book: AddressBook):
     contact set <name> <field> <value> - встановлює поле
     """
     if not args:
-        return "Usage: contact set <name> [field] [value]"
+        return error("Usage: contact set <name> [field] [value]")
     
     name = args[0]  # Ім'я завжди перший аргумент
     
     # Якщо тільки ім'я - створюємо контакт
     if len(args) == 1:
         if book.find(name):
-            return f"❌ Contact '{name}' already exists"
+            return error(f" Contact '{name}' already exists")
         record = Record(name)
         book.add_record(record)
-        return f"✅ Contact '{name}' created"
+        return success(f" Contact '{name}' created")
     
     # Якщо 3 аргументи - встановлюємо поле
     if len(args) == 3:
@@ -43,11 +44,11 @@ def contact_set(args, book: AddressBook):
         elif field == 'birthday':
             record.set_birthday(value)
         else:
-            return f"❌ Unknown field '{field}'. Use: phone, email, address, birthday"
+            return error(f" Unknown field '{field}'. Use: phone, email, address, birthday")
         
-        return f"✅ {field} set for '{name}'"
+        return success(f" {field} set for '{name}'")
     
-    return "❌ Wrong number of arguments. Use: contact set <name> OR contact set <name> <field> <value>"
+    return error(" Wrong number of arguments. Use: contact set <name> OR contact set <name> <field> <value>")
 
 @input_error
 def contact_get(args, book: AddressBook):
@@ -59,14 +60,14 @@ def contact_get(args, book: AddressBook):
     contact get John - знайти контакт John
     """
     if not args:
-        return "Usage: contact get <all|birthdays|name>"
+        return error("Usage: contact get <all|birthdays|name>")
     
     first_arg = args[0].lower()
     
     # Показати всі контакти
     if first_arg == 'all':
         if not book.data:
-            return "Address book is empty"
+            return info("Address book is empty")
         return '\n'.join(str(record) for record in book.data.values())
     
     # Показати дні народження
@@ -77,8 +78,8 @@ def contact_get(args, book: AddressBook):
         
         upcoming = book.get_upcoming_birthdays(days)
         if upcoming:
-            return f"Birthdays in {days} days:\n" + "\n".join(upcoming)
-        return f"No birthdays in the next {days} days"
+            return success(f"Birthdays in {days} days:\n" + "\n".join(upcoming))
+        return info(f"No birthdays in the next {days} days")
     
     # Знайти конкретний контакт
     name = args[0]
@@ -89,9 +90,9 @@ def contact_get(args, book: AddressBook):
     # Пошук по всіх полях
     results = book.search_contacts(name)
     if results:
-        return "Found contacts:\n" + "\n".join(str(r) for r in results)
+        return success("Found contacts:\n" + "\n".join(str(r) for r in results))
     
-    return f"Contact '{name}' not found"
+    return error(f"Contact '{name}' not found")
 
 @input_error
 def contact_delete(args, book: AddressBook):
@@ -104,17 +105,17 @@ def contact_delete(args, book: AddressBook):
     contact delete John birthday - видаляє день народження
     """
     if not args:
-        return "Usage: contact delete <name> [field] [value]"
+        return error("Usage: contact delete <name> [field] [value]")
     
     name = args[0]
     record = book.find(name)
     if not record:
-        return f"Contact '{name}' not found"
+        return error(f"Contact '{name}' not found")
     
     # Якщо тільки ім'я - видаляємо весь контакт
     if len(args) == 1:
         book.delete(name)
-        return f"Contact '{name}' deleted"
+        return success(f"Contact '{name}' deleted")
     
     # Якщо 2 аргументи - видаляємо поле (email, address, birthday)
     if len(args) == 2:
@@ -122,24 +123,24 @@ def contact_delete(args, book: AddressBook):
         
         if field == 'email':
             if not record.email:
-                return f"'{name}' has no email to delete"
+                return info(f"'{name}' has no email to delete")
             record.remove_email()
-            return f"Email deleted for '{name}'"
+            return success(f"Email deleted for '{name}'")
         
         elif field == 'address':
             if not record.address:
-                return f"'{name}' has no address to delete"
+                return info(f"'{name}' has no address to delete")
             record.remove_address()
-            return f"Address deleted for '{name}'"
+            return success(f"Address deleted for '{name}'")
         
         elif field == 'birthday':
             if not record.birthday:
-                return f"'{name}' has no birthday to delete"
+                return info(f"'{name}' has no birthday to delete")
             record.remove_birthday()
-            return f"Birthday deleted for '{name}'"
+            return success(f"Birthday deleted for '{name}'")
         
         else:
-            return f"❌ Unknown field '{field}'. Use: email, address, birthday, or 'phone <number>'"
+            return error(f" Unknown field '{field}'. Use: email, address, birthday, or 'phone <number>'")
     
     # Якщо 3 аргументи - видаляємо конкретний телефон
     if len(args) == 3:
@@ -148,13 +149,14 @@ def contact_delete(args, book: AddressBook):
         
         if field == 'phone':
             if not record.find_phone(value):
-                return f"Phone '{value}' not found for '{name}'"
+                return error(f"Phone '{value}' not found for '{name}'")
             record.remove_phone(value)
-            return f"Phone '{value}' deleted for '{name}'"
+            return success(f"Phone '{value}' deleted for '{name}'")
         else:
-            return f"❌ For 3 arguments, only 'phone <number>' is supported"
+            return error(" For 3 arguments, only 'phone <number>' is supported")
     
-    return "❌ Wrong arguments. Use: contact delete <name> [field] [value]"
+    return error(" Wrong arguments. Use: contact delete <name> [field] [value]")
+
 @input_error
 def note_set(args, notebook: NoteBook):
     """
@@ -164,7 +166,7 @@ def note_set(args, notebook: NoteBook):
     note set "title" content "new_content" - оновлює зміст
     """
     if len(args) < 2:
-        return "Usage: note set \"title\" \"content\" OR note set \"title\" tag \"tag_name\""
+        return error("Usage: note set \"title\" \"content\" OR note set \"title\" tag \"tag_name\"")
     
     title = args[0]
     
@@ -174,7 +176,7 @@ def note_set(args, notebook: NoteBook):
         content = args[1] if len(args) >= 2 else ""
         note = Note(title, content)
         notebook.add_note(note)
-        return f"✅ Note '{title}' created"
+        return success(f" Note '{title}' created")
     
     # Оновлення існуючої нотатки
     if len(args) >= 3:
@@ -184,15 +186,15 @@ def note_set(args, notebook: NoteBook):
         if action == "tag":
             try:
                 note.add_tag(value)
-                return f"✅ Tag '#{value}' added to note '{title}'"
+                return success(f" Tag '#{value}' added to note '{title}'")
             except ValueError as e:
-                return f"❌ {str(e)}"
+                return error(f" {str(e)}")
         
         elif action == "content":
             note.update_content(value)
-            return f"✅ Content updated for note '{title}'"
+            return success(f" Content updated for note '{title}'")
     
-    return "❌ Invalid arguments"
+    return error(" Invalid arguments")
 
 @input_error
 def note_get(args, notebook: NoteBook):
@@ -204,36 +206,38 @@ def note_get(args, notebook: NoteBook):
     note get tag "tag_name" - пошук за тегом
     """
     if not args:
-        return "Usage: note get <all|title|search|tag> [value]"
+        return error("Usage: note get <all|title|search|tag> [value]")
     
     command = args[0].lower()
     
     if command == "all":
         if not notebook.notes:
-            return "No notes found"
+            return info("No notes found")
         return '\n'.join(str(note) for note in notebook.notes.values())
     
     elif command == "search" and len(args) > 1:
         query = args[1]
         results = notebook.search_by_content(query)
         if results:
-            return f"Found {len(results)} note(s):\n" + '\n'.join(str(note) for note in results)
-        return f"No notes found for query '{query}'"
+            return success(f"Found {len(results)} note(s):\n" + '\n'.join(str(note) for note in results))
+        return info(f"No notes found for query '{query}'")
     
     elif command == "tag" and len(args) > 1:
         tag = args[1]
         results = notebook.search_by_tags(tag)
         if results:
-            return f"Notes with tag '#{tag}':\n" + '\n'.join(str(note) for note in results)
-        return f"No notes found with tag '#{tag}'"
+            return success(f"Notes with tag '#{tag}':\n" + '\n'.join(str(note) for note in results))
+        return info(f"No notes found with tag '#{tag}'")
     
     else:
         # Пошук конкретної нотатки
         title = args[0]
         note = notebook.find_note(title)
         if note:
-            return str(note)
-        return f"Note '{title}' not found"
+            note.display()
+            return ""
+
+        return error(f"Note '{title}' not found")
 
 @input_error
 def note_delete(args, notebook: NoteBook):
@@ -243,30 +247,31 @@ def note_delete(args, notebook: NoteBook):
     note delete "title" tag "tag_name" - видаляє тег
     """
     if not args:
-        return "Usage: note delete \"title\" [tag \"tag_name\"]"
+        return error("Usage: note delete \"title\" [tag \"tag_name\"]")
     
     title = args[0]
     note = notebook.find_note(title)
     if not note:
-        return f"Note '{title}' not found"
+        return error("Note '{title}' not found")
     
     # Видалення тегу
     if len(args) == 3 and args[1].lower() == "tag":
         tag_name = args[2]
         note.remove_tag(tag_name)
-        return f"✅ Tag '#{tag_name}' removed from note '{title}'"
+        return success(f" Tag '#{tag_name}' removed from note '{title}'")
     
     # Видалення всієї нотатки
     elif len(args) == 1:
         notebook.delete_note(title)
-        return f"✅ Note '{title}' deleted"
+        return success(f" Note '{title}' deleted")
     
-    return "❌ Invalid arguments"
+    return error(" Invalid arguments")
 
 
 def show_help():
     """Показує довідку по командам."""
-    return """Available commands:
+    return """[bold cyan]Available commands:[/bold cyan]
+[green]CONTACTS:[/green]
 - contact set <name>                 - Create new contact
 - contact set <name> <field> <value> - Set contact field
 - contact get all                    - Show all contacts  
@@ -281,7 +286,7 @@ def show_help():
 
 Fields: phone, email, address, birthday
 
-Examples:
+[yellow]Examples:[/yellow]
   contact set John
   contact set John phone 1234567890
   contact set John email john@example.com
@@ -292,7 +297,7 @@ Examples:
   contact delete John birthday
   contact delete John
 
-  NOTES:
+[green]NOTES:[/green]
 - note set "title" "content"        - Create note
 - note set "title" tag "tag_name"   - Add tag to note
 - note set "title" content "text"   - Update note content
@@ -303,7 +308,7 @@ Examples:
 - note delete "title"               - Delete entire note
 - note delete "title" tag "tag"     - Remove tag from note
 
-Examples:
+[yellow]Examples:[/yellow]
   note set "Shopping" "Buy milk and bread"
   note set "Shopping" tag "urgent"
   note get tag "work"

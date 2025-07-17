@@ -5,6 +5,8 @@ from classbot.handlers import (
 from classbot.notebook import NoteBook 
 from classbot.guesser import guess_command
 from classbot.address_book import AddressBook
+from classbot.console import console, success, error, info, warning, show_panel, rule
+
 
 def parse_input(user_input):
     """
@@ -48,59 +50,64 @@ def main():
         "get": note_get,
         "delete": note_delete,
     }
-    print("👋 Welcome to the assistant bot!")
+    rule("Welcome to CLASS CLI Assistant 🤖")
+    info("Type 'help' to see available commands.\n")
 
     try:
         while True:
-            user_input = input("📝 Enter a command: ")
+            user_input = console.input("📥 [bold cyan]Enter a command[/]: ")
             command, sub_command, args = parse_input(user_input)
 
             if not command:
                 continue
 
             if command in ["close", "exit"]:
-                print("Good bye!")
+                success("Session ended. Goodbye!")
                 break
 
             elif command == "help":
-                print(show_help())
+                show_panel("HELP", show_help())
             
             # Виклик обробників для команди 'contact'
             elif command == 'contact':
                 if sub_command in contact_commands:
-                    print(contact_commands[sub_command](args, book))
+                    response = contact_commands[sub_command](args, book)
+                    console.print(response)
                 else:
                     suggestion = guess_command(command, sub_command)
                     if suggestion:
-                        print(f"❓ Unknown contact command '{sub_command}'. Maybe you meant: '{suggestion}'?")
+                        warning(f"Unknown subcommand '{sub_command}'. Did you mean '{suggestion}'?")
                     else:
-                        print("Invalid contact command. Use: set, get, delete, or help.")
+                        error("Invalid contact command. Use: set, get, delete, or help.")
+            
             # Виклик обробників для команди 'note'
             elif command == 'note':
                 if sub_command in note_commands:
-                    print(note_commands[sub_command](args, notebook))
+                    response = note_commands[sub_command](args, notebook)
+                    console.print(response)
                 else:
                     suggestion = guess_command(command, sub_command)
                     if suggestion:
-                        print(f"❓ Unknown note command '{sub_command}'. Maybe you meant: '{suggestion}'?")
+                        warning(f"Unknown subcommand '{sub_command}'. Did you mean '{suggestion}'?")
                     else:
-                        print("Invalid note command. Use: set, get, delete, or help.")
+                        error("Invalid note command. Use: set, get, delete, or help.")
 
             
             else:
                 suggestion = guess_command(command, sub_command)
                 if suggestion:
-                    print(f"❓ Unknown command '{command} {sub_command or ''}'. Maybe you meant: '{suggestion}'?")
+                    warning(f"Unknown command '{command} {sub_command or ''}'. Did you mean '{suggestion}'?")
                 else:
-                    print("❗ Invalid command. Type 'help' to see available commands.")
+                    error("Unknown command. Type 'help' to see available commands.")
 
 
     except KeyboardInterrupt:
-        print("\n⚠️ Interrupted by user.")
+        warning("\nProgram interrupted by user (Ctrl+C).")
+
     finally:
-        print(f"✅ Contacts saved to {FILENAME}")
-        print("👋 Good bye!")
         save_data({'contacts': book, 'notes': notebook})
+        success(f"All data saved to [bold]{FILENAME}[/].")
+        rule("Goodbye 👋")
 
 if __name__ == "__main__":
     main()
