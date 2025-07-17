@@ -1,6 +1,6 @@
-from .address_book import Record, AddressBook
-from .decorators import input_error
-from .notebook import Note, NoteBook
+from classbot.address_book import Record, AddressBook
+from classbot.decorators import input_error
+from classbot.notebook import Note, NoteBook
 
 @input_error
 def contact_set(args, book: AddressBook):

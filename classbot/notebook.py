@@ -1,5 +1,5 @@
 from datetime import datetime
-from .address_book import Field
+from classbot.address_book import Field
 
 
 class Tag(Field):
