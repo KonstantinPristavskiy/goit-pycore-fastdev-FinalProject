@@ -1,9 +1,10 @@
 from datetime import datetime
 from classbot.address_book import Field
-from rich.console import Console
+from classbot.console import console
 from rich.table import Table
+from rich.panel import Panel
+from rich.text import Text
 
-console = Console()
 
 class Tag(Field):
     """Клас для зберігання тегу."""
@@ -20,6 +21,20 @@ class Note:
         self.tags = []
         self.created_date = datetime.now()
         self.modified_date = datetime.now()
+
+    def __rich__(self):
+        content = Text(self.content, style="white")
+        tag_str = ", ".join(f"#{tag.value}" for tag in self.tags)
+        tag_text = Text(f"Tags: {tag_str}", style="green") if tag_str else ""
+
+        footer = Text(f"Created: {self.created_date.strftime('%Y-%m-%d %H:%M')}, "
+                    f"Updated: {self.modified_date.strftime('%Y-%m-%d %H:%M')}", style="dim")
+
+        return Panel.fit(
+            "\n".join([str(content), str(tag_text), str(footer)]),
+            title=f"📝 {self.title}", border_style="cyan"
+        )
+
     
     def add_tag(self, tag):
         """Додає тег до нотатки."""
@@ -46,19 +61,6 @@ class Note:
         tags_part = f" | Tags: {tags_str}" if tags_str else ""
         return f"📝 {self.title}: {self.content[:50]}{'...' if len(self.content) > 50 else ''}{tags_part}"
 
-    def display(self):
-        """Виводить нотатку у форматованому вигляді з rich."""
-        table = Table(title=f"[bold cyan]📝 {self.title}", show_header=False, box=None)
-        table.add_row("[white]Content:", self.content)
-
-        if self.tags:
-            tags_str = ', '.join(f"[green]#{tag.value}" for tag in self.tags)
-            table.add_row("[white]Tags:", tags_str)
-
-        table.add_row("[dim]Created:", f"[dim]{self.created_date.strftime('%Y-%m-%d %H:%M')}")
-        table.add_row("[dim]Updated:", f"[dim]{self.modified_date.strftime('%Y-%m-%d %H:%M')}")
-
-        console.print(table)
 
 class NoteBook:
     """Клас для управління колекцією нотаток."""
@@ -110,5 +112,6 @@ class NoteBook:
 
         console.rule("[bold magenta]🗂 All Notes")
         for note in self.notes.values():
+            console.rule(f"[bold blue]📝 {note.title}")
             note.display()
             console.print()
