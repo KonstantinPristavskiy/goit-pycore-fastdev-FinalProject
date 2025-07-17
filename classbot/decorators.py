@@ -1,3 +1,5 @@
+from classbot.console import info, error
+
 def input_error(func):
     """
     Декоратор для обробки помилок вводу, таких як KeyError, ValueError, IndexError.
@@ -7,9 +9,9 @@ def input_error(func):
         try:
             return func(*args, **kwargs)
         except KeyError:
-            return "⚠️ Contact not found."
+            return info("⚠️ Contact not found.")
         except ValueError as e:
-            return f"❌ {str(e)}"
+            return error(f"❌ {str(e)}")
         except IndexError:
-            return "❌ Not enough arguments."
+            return error("❌ Not enough arguments.")
     return inner

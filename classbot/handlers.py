@@ -18,10 +18,10 @@ def contact_set(args, book: AddressBook):
     # Якщо тільки ім'я - створюємо контакт
     if len(args) == 1:
         if book.find(name):
-            return error(f"❌ Contact '{name}' already exists")
+            return error(f" Contact '{name}' already exists")
         record = Record(name)
         book.add_record(record)
-        return success(f"✅ Contact '{name}' created")
+        return success(f" Contact '{name}' created")
     
     # Якщо 3 аргументи - встановлюємо поле
     if len(args) == 3:
@@ -44,11 +44,11 @@ def contact_set(args, book: AddressBook):
         elif field == 'birthday':
             record.set_birthday(value)
         else:
-            return error(f"❌ Unknown field '{field}'. Use: phone, email, address, birthday")
+            return error(f" Unknown field '{field}'. Use: phone, email, address, birthday")
         
-        return success(f"✅ {field} set for '{name}'")
+        return success(f" {field} set for '{name}'")
     
-    return error("❌ Wrong number of arguments. Use: contact set <name> OR contact set <name> <field> <value>")
+    return error(" Wrong number of arguments. Use: contact set <name> OR contact set <name> <field> <value>")
 
 @input_error
 def contact_get(args, book: AddressBook):
@@ -140,7 +140,7 @@ def contact_delete(args, book: AddressBook):
             return success(f"Birthday deleted for '{name}'")
         
         else:
-            return error(f"❌ Unknown field '{field}'. Use: email, address, birthday, or 'phone <number>'")
+            return error(f" Unknown field '{field}'. Use: email, address, birthday, or 'phone <number>'")
     
     # Якщо 3 аргументи - видаляємо конкретний телефон
     if len(args) == 3:
@@ -153,9 +153,9 @@ def contact_delete(args, book: AddressBook):
             record.remove_phone(value)
             return success(f"Phone '{value}' deleted for '{name}'")
         else:
-            return error("❌ For 3 arguments, only 'phone <number>' is supported")
+            return error(" For 3 arguments, only 'phone <number>' is supported")
     
-    return error("❌ Wrong arguments. Use: contact delete <name> [field] [value]")
+    return error(" Wrong arguments. Use: contact delete <name> [field] [value]")
 
 @input_error
 def note_set(args, notebook: NoteBook):
@@ -176,7 +176,7 @@ def note_set(args, notebook: NoteBook):
         content = args[1] if len(args) >= 2 else ""
         note = Note(title, content)
         notebook.add_note(note)
-        return success(f"✅ Note '{title}' created")
+        return success(f" Note '{title}' created")
     
     # Оновлення існуючої нотатки
     if len(args) >= 3:
@@ -186,15 +186,15 @@ def note_set(args, notebook: NoteBook):
         if action == "tag":
             try:
                 note.add_tag(value)
-                return success(f"✅ Tag '#{value}' added to note '{title}'")
+                return success(f" Tag '#{value}' added to note '{title}'")
             except ValueError as e:
-                return error(f"❌ {str(e)}")
+                return error(f" {str(e)}")
         
         elif action == "content":
             note.update_content(value)
-            return success(f"✅ Content updated for note '{title}'")
+            return success(f" Content updated for note '{title}'")
     
-    return error("❌ Invalid arguments")
+    return error(" Invalid arguments")
 
 @input_error
 def note_get(args, notebook: NoteBook):
@@ -234,7 +234,9 @@ def note_get(args, notebook: NoteBook):
         title = args[0]
         note = notebook.find_note(title)
         if note:
-            return str(note)
+            note.display()
+            return ""
+
         return error(f"Note '{title}' not found")
 
 @input_error
@@ -256,20 +258,20 @@ def note_delete(args, notebook: NoteBook):
     if len(args) == 3 and args[1].lower() == "tag":
         tag_name = args[2]
         note.remove_tag(tag_name)
-        return success(f"✅ Tag '#{tag_name}' removed from note '{title}'")
+        return success(f" Tag '#{tag_name}' removed from note '{title}'")
     
     # Видалення всієї нотатки
     elif len(args) == 1:
         notebook.delete_note(title)
-        return success(f"✅ Note '{title}' deleted")
+        return success(f" Note '{title}' deleted")
     
-    return error("❌ Invalid arguments")
+    return error(" Invalid arguments")
 
 
 def show_help():
     """Показує довідку по командам."""
     return """[bold cyan]Available commands:[/bold cyan]
-    [green]CONTACTS:[/green]
+[green]CONTACTS:[/green]
 - contact set <name>                 - Create new contact
 - contact set <name> <field> <value> - Set contact field
 - contact get all                    - Show all contacts  
@@ -284,7 +286,7 @@ def show_help():
 
 Fields: phone, email, address, birthday
 
-[blue]Examples:[/blue]
+[yellow]Examples:[/yellow]
   contact set John
   contact set John phone 1234567890
   contact set John email john@example.com
@@ -306,7 +308,7 @@ Fields: phone, email, address, birthday
 - note delete "title"               - Delete entire note
 - note delete "title" tag "tag"     - Remove tag from note
 
-[blue]Examples:[/blue]
+[yellow]Examples:[/yellow]
   note set "Shopping" "Buy milk and bread"
   note set "Shopping" tag "urgent"
   note get tag "work"

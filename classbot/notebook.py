@@ -1,6 +1,9 @@
 from datetime import datetime
 from classbot.address_book import Field
+from rich.console import Console
+from rich.table import Table
 
+console = Console()
 
 class Tag(Field):
     """Клас для зберігання тегу."""
@@ -43,6 +46,20 @@ class Note:
         tags_part = f" | Tags: {tags_str}" if tags_str else ""
         return f"📝 {self.title}: {self.content[:50]}{'...' if len(self.content) > 50 else ''}{tags_part}"
 
+    def display(self):
+        """Виводить нотатку у форматованому вигляді з rich."""
+        table = Table(title=f"[bold cyan]📝 {self.title}", show_header=False, box=None)
+        table.add_row("[white]Content:", self.content)
+
+        if self.tags:
+            tags_str = ', '.join(f"[green]#{tag.value}" for tag in self.tags)
+            table.add_row("[white]Tags:", tags_str)
+
+        table.add_row("[dim]Created:", f"[dim]{self.created_date.strftime('%Y-%m-%d %H:%M')}")
+        table.add_row("[dim]Updated:", f"[dim]{self.modified_date.strftime('%Y-%m-%d %H:%M')}")
+
+        console.print(table)
+
 class NoteBook:
     """Клас для управління колекцією нотаток."""
     def __init__(self):
@@ -84,3 +101,14 @@ class NoteBook:
     def sort_by_tags(self):
         """Сортує нотатки за тегами."""
         return sorted(self.notes.values(), key=lambda note: [tag.value for tag in note.tags])
+    
+    def display_all_notes(self):
+        """Виводить всі нотатки у форматі rich."""
+        if not self.notes:
+            console.print("[bold red]No notes found.")
+            return
+
+        console.rule("[bold magenta]🗂 All Notes")
+        for note in self.notes.values():
+            note.display()
+            console.print()

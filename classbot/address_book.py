@@ -1,6 +1,7 @@
 from collections import UserDict
 from datetime import datetime
 import re
+from classbot.console import error 
 
 class Field:
     """Базовий клас для всіх полів запису (ім'я, телефон, і т.д.)."""
@@ -110,7 +111,7 @@ class Record:
         bday = f", Birthday: {self.birthday.value.strftime('%d.%m.%Y')}" if self.birthday else "" 
         address = f", Address: {self.address.value}" if self.address else ""
         email = f", Email: {self.email.value}" if self.email else ""
-        return f"Contact name: {self.name.value}, phones: {phones}{bday}{address}{email}"
+        return f"[bold yellow]Contact:[/bold yellow] {self.name.value} | [green]Phones:[/green] {phones}{bday}{address}{email}"
     
 class AddressBook(UserDict):
     """Клас для зберігання та управління записами в адресній книзі."""
@@ -141,7 +142,7 @@ class AddressBook(UserDict):
                     bday = bday.replace(year=today.year + 1)
                 delta = (bday - today).days
                 if 0 <= delta <= days:
-                    upcoming.append(f"{record.name.value} ({bday.strftime('%d.%m')})")
+                    upcoming.append(f"[bold]{record.name.value}[/bold] ({bday.strftime('%d.%m')})")
         return upcoming
 
     def search_contacts(self, query):
