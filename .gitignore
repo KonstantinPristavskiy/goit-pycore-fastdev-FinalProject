@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 classbot/__pycache__/
+classbot.egg-info/
 *.py[cod]
 *$py.class
 

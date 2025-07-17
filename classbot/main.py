@@ -1,10 +1,10 @@
-from storage import load_data, save_data, FILENAME
-from handlers import (
+from .storage import load_data, save_data, FILENAME
+from .handlers import (
     contact_set, contact_get, contact_delete, show_help, note_set,
     note_get, note_delete)
-from notebook import NoteBook 
-from guesser import guess_command
-from address_book import AddressBook
+from .notebook import NoteBook 
+from .guesser import guess_command
+from .address_book import AddressBook
 
 def parse_input(user_input):
     """
