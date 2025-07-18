@@ -2,6 +2,7 @@ from classbot.address_book import Record, AddressBook
 from classbot.decorators import input_error
 from classbot.notebook import Note, NoteBook
 from classbot.console import success, info, error
+import shlex
 
 @input_error
 def contact_set(args, book: AddressBook):
@@ -23,10 +24,11 @@ def contact_set(args, book: AddressBook):
         book.add_record(record)
         return success(f" Contact '{name}' created")
     
-    # Якщо 3 аргументи - встановлюємо поле
-    if len(args) == 3:
+    # Якщо 3 або більше аргументів - встановлюємо поле
+    if len(args) >= 3:
         field = args[1].lower()
-        value = args[2]
+        # З'єднуємо всі аргументи після field в одне значення
+        value = ' '.join(args[2:])
         
         # Створюємо контакт якщо не існує
         record = book.find(name)
@@ -168,22 +170,28 @@ def note_set(args, notebook: NoteBook):
     if len(args) < 2:
         return error("Usage: note set \"title\" \"content\" OR note set \"title\" tag \"tag_name\"")
     
-    title = args[0]
+    title = args[0]  # Лапки вже видалені shlex.split()
     
     # Якщо нотатка не існує, створюємо нову
     note = notebook.find_note(title)
     if not note:
-        content = args[1] if len(args) >= 2 else ""
+        content = ' '.join(args[1:])  # Лапки вже видалені
         note = Note(title, content)
         notebook.add_note(note)
         return success(f" Note '{title}' created")
     
     # Оновлення існуючої нотатки
-    if len(args) >= 3:
+    if len(args) == 2:
+        # Якщо тільки 2 аргументи - оновлюємо контент
+        content = args[1]
+        note.update_content(content)
+        return success(f" Content updated for note '{title}'")
+        
+    elif len(args) >= 3:
         action = args[1].lower()
-        value = args[2]
         
         if action == "tag":
+            value = args[2]
             try:
                 note.add_tag(value)
                 return success(f" Tag '#{value}' added to note '{title}'")
@@ -191,6 +199,7 @@ def note_set(args, notebook: NoteBook):
                 return error(f" {str(e)}")
         
         elif action == "content":
+            value = ' '.join(args[2:])
             note.update_content(value)
             return success(f" Content updated for note '{title}'")
     
@@ -208,7 +217,7 @@ def note_get(args, notebook: NoteBook):
     if not args:
         return error("Usage: note get <all|title|search|tag> [value]")
     
-    command = args[0].lower()
+    command = args[0].lower().strip('"')  # Видаляємо лапки
     
     if command == "all":
         if not notebook.notes:
@@ -216,14 +225,14 @@ def note_get(args, notebook: NoteBook):
         return '\n'.join(str(note) for note in notebook.notes.values())
     
     elif command == "search" and len(args) > 1:
-        query = args[1]
+        query = args[1].strip('"')  # Видаляємо лапки
         results = notebook.search_by_content(query)
         if results:
             return success(f"Found {len(results)} note(s):\n" + '\n'.join(str(note) for note in results))
         return info(f"No notes found for query '{query}'")
     
     elif command == "tag" and len(args) > 1:
-        tag = args[1]
+        tag = args[1].strip('"')  # Видаляємо лапки
         results = notebook.search_by_tags(tag)
         if results:
             return success(f"Notes with tag '#{tag}':\n" + '\n'.join(str(note) for note in results))
@@ -231,7 +240,7 @@ def note_get(args, notebook: NoteBook):
     
     else:
         # Пошук конкретної нотатки
-        title = args[0]
+        title = args[0].strip('"')  # Видаляємо лапки
         note = notebook.find_note(title)
         if note:
             note.display()
@@ -249,14 +258,14 @@ def note_delete(args, notebook: NoteBook):
     if not args:
         return error("Usage: note delete \"title\" [tag \"tag_name\"]")
     
-    title = args[0]
+    title = args[0].strip('"')  # Видаляємо лапки
     note = notebook.find_note(title)
     if not note:
-        return error("Note '{title}' not found")
+        return error(f"Note '{title}' not found")  # Виправлений f-string
     
     # Видалення тегу
     if len(args) == 3 and args[1].lower() == "tag":
-        tag_name = args[2]
+        tag_name = args[2].strip('"')  # Видаляємо лапки
         note.remove_tag(tag_name)
         return success(f" Tag '#{tag_name}' removed from note '{title}'")
     
@@ -272,19 +281,22 @@ def show_help():
     """Показує довідку по командам."""
     return """[bold cyan]Available commands:[/bold cyan]
 [green]CONTACTS:[/green]
-- contact set <name>                 - Create new contact
-- contact set <name> <field> <value> - Set contact field
+- contact set name                   - Create new contact
+- contact set name phone value       - Set phone field
+- contact set name email value       - Set email field
+- contact set name address value     - Set address field
+- contact set name birthday value    - Set birthday field
 - contact get all                    - Show all contacts  
-- contact get birthdays              - Show birthdays (7 days)
-- contact get birthdays <days>       - Show birthdays (custom days)
-- contact get <name>                 - Find contact
-- contact delete <name>              - Delete entire contact
-- contact delete <name> <field>      - Delete field (email, address, birthday)
-- contact delete <name> phone <number> - Delete specific phone
+- contact get birthdays days        - Show birthdays (custom days)
+- contact get name                   - Find contact
+- contact delete name                - Delete entire contact
+- contact delete name email          - Delete email field
+- contact delete name address        - Delete address field
+- contact delete name birthday       - Delete birthday field
+- contact delete name phone number   - Delete phone field
 - help                               - Show this help
 - exit                               - Save and quit
 
-Fields: phone, email, address, birthday
 
 [yellow]Examples:[/yellow]
   contact set John
@@ -309,7 +321,7 @@ Fields: phone, email, address, birthday
 - note delete "title" tag "tag"     - Remove tag from note
 
 [yellow]Examples:[/yellow]
-  note set "Shopping" "Buy milk and bread"
+  note set "Shopping" "Buy milk"
   note set "Shopping" tag "urgent"
   note get tag "work"
   note get search "milk"

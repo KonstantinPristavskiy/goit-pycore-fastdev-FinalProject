@@ -6,16 +6,24 @@ from rich.text import Text
 console = Console()
 
 def success(message: str):
-    console.print(f":white_check_mark: [green]{message}[/]")
+    formatted = f":white_check_mark: [green]{message}[/]"
+    console.print(formatted)
+    return ""  # Повертаємо порожній рядок замість None
 
 def error(message: str):
-    console.print(f":x: [bold red]{message}[/]")
+    formatted = f":x: [bold red]{message}[/]"
+    console.print(formatted)
+    return ""
 
 def warning(message: str):
-    console.print(f":warning: [yellow]{message}[/]")
+    formatted = f":warning: [yellow]{message}[/]"
+    console.print(formatted)
+    return ""
 
 def info(message: str):
-    console.print(f":information_source: [blue]{message}[/]")
+    formatted = f":information_source: [blue]{message}[/]"
+    console.print(formatted)
+    return ""
 
 def show_panel(title: str, content: str, style: str = "cyan"):
     console.print(Panel(content, title=title, style=style))
