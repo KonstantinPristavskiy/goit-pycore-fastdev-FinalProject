@@ -72,7 +72,8 @@ def main():
             elif command == 'contact':
                 if sub_command in contact_commands:
                     response = contact_commands[sub_command](args, book)
-                    console.print(response)
+                    if response: 
+                        console.print(response)
                 else:
                     suggestion = guess_command(command, sub_command)
                     if suggestion:
@@ -84,7 +85,8 @@ def main():
             elif command == 'note':
                 if sub_command in note_commands:
                     response = note_commands[sub_command](args, notebook)
-                    console.print(response)
+                    if response:
+                        console.print(response)
                 else:
                     suggestion = guess_command(command, sub_command)
                     if suggestion:
