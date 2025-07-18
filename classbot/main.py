@@ -1,3 +1,5 @@
+# shlex - це модуль для розбиття рядків на частини, які можна використовувати як аргументи команди
+import shlex
 from classbot.storage import load_data, save_data, FILENAME
 from classbot.handlers import (
     contact_set, contact_get, contact_delete, show_help, note_set,
@@ -11,20 +13,27 @@ from classbot.console import console, success, error, info, warning, show_panel,
 def parse_input(user_input):
     """
     Розбирає введений рядок на основну команду, підкоманду та аргументи.
-    Приклад: "contact set John phone 123" -> ('contact', 'set', ['John', 'phone', '123'])
+    Підтримує лапки для групування аргументів.
+    Приклад: 'note set "my title" "content here"' -> ('note', 'set', ['my title', 'content here'])
     """
     stripped = user_input.strip()
     if not stripped:
         return None, None, []
     
-    parts = stripped.split()
+    try:
+        # Використовуємо shlex для правильної обробки лапок
+        parts = shlex.split(stripped)
+    except ValueError:
+        # Якщо лапки не збалансовані, використовуємо звичайний split
+        parts = stripped.split()
+    
     command = parts[0].lower()
     
-    # Якщо команда не 'contact', то підкоманди немає.
+    # Якщо команда не 'contact' або 'note', то підкоманди немає
     if command != 'contact' and command != 'note':
         return command, None, parts[1:]
 
-    # Якщо команда 'contact', але немає підкоманди.
+    # Якщо команда 'contact'/'note', але немає підкоманди
     if len(parts) < 2:
         return command, None, []
 
