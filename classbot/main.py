@@ -1,4 +1,3 @@
-# shlex - це модуль для розбиття рядків на частини, які можна використовувати як аргументи команди
 import shlex
 from classbot.storage import load_data, save_data, FILENAME
 from classbot.handlers import (
@@ -8,32 +7,27 @@ from classbot.notebook import NoteBook
 from classbot.guesser import guess_command
 from classbot.address_book import AddressBook
 from classbot.console import console, success, error, info, warning, show_panel, rule
+from rich.panel import Panel
 
 
 def parse_input(user_input):
     """
     Розбирає введений рядок на основну команду, підкоманду та аргументи.
     Підтримує лапки для групування аргументів.
-    Приклад: 'note set "my title" "content here"' -> ('note', 'set', ['my title', 'content here'])
     """
     stripped = user_input.strip()
     if not stripped:
         return None, None, []
     
     try:
-        # Використовуємо shlex для правильної обробки лапок
         parts = shlex.split(stripped)
     except ValueError:
-        # Якщо лапки не збалансовані, використовуємо звичайний split
         parts = stripped.split()
     
     command = parts[0].lower()
-    
-    # Якщо команда не 'contact' або 'note', то підкоманди немає
-    if command != 'contact' and command != 'note':
+    if command not in ('contact', 'note'):
         return command, None, parts[1:]
 
-    # Якщо команда 'contact'/'note', але немає підкоманди
     if len(parts) < 2:
         return command, None, []
 
@@ -41,24 +35,36 @@ def parse_input(user_input):
     args = parts[2:]
     return command, sub_command, args
 
+
+def show_suggestions(entered_command, suggestions):
+    """
+    Виводить панель з підказками команд у форматі rich.
+    """
+    panel_text = f"[bold red]Unknown command:[/] [yellow]{entered_command}[/]\n\n"
+    panel_text += "[green]Did you mean:[/]\n"
+    for s in suggestions:
+        panel_text += f"  • [bold cyan]{s}[/]\n"
+
+    console.print(Panel(panel_text, title="Suggestions", border_style="red"))
+
+
 def main():
-    data = load_data()  # Завантажуємо і контакти, і нотатки
+    data = load_data()
     book = data.get('contacts', AddressBook())
     notebook = data.get('notes', NoteBook())
 
-    # Словник для команд, що стосуються контактів
     contact_commands = {
         "set": contact_set,
         "get": contact_get, 
         "delete": contact_delete,
     }
 
-    # Словник для команд, що стосуються нотаток
     note_commands = {
         "set": note_set,
         "get": note_get,
         "delete": note_delete,
     }
+
     rule("Welcome to CLASS CLI Assistant 🤖")
     info("Type 'help' to see available commands.\n")
 
@@ -76,41 +82,37 @@ def main():
 
             elif command == "help":
                 show_panel("HELP", show_help())
-            
-            # Виклик обробників для команди 'contact'
-            elif command == 'contact':
+
+            elif command == "contact":
                 if sub_command in contact_commands:
                     response = contact_commands[sub_command](args, book)
-                    if response: 
+                    if response:
                         console.print(response)
                 else:
-                    suggestion = guess_command(command, sub_command)
-                    if suggestion:
-                        warning(f"Unknown subcommand '{sub_command}'. Did you mean '{suggestion}'?")
+                    suggestions = guess_command(command, sub_command)
+                    if suggestions:
+                        show_suggestions(f"{command} {sub_command}", suggestions)
                     else:
                         error("Invalid contact command. Use: set, get, delete, or help.")
-            
-            # Виклик обробників для команди 'note'
-            elif command == 'note':
+
+            elif command == "note":
                 if sub_command in note_commands:
                     response = note_commands[sub_command](args, notebook)
                     if response:
                         console.print(response)
                 else:
-                    suggestion = guess_command(command, sub_command)
-                    if suggestion:
-                        warning(f"Unknown subcommand '{sub_command}'. Did you mean '{suggestion}'?")
+                    suggestions = guess_command(command, sub_command)
+                    if suggestions:
+                        show_suggestions(f"{command} {sub_command}", suggestions)
                     else:
                         error("Invalid note command. Use: set, get, delete, or help.")
 
-            
             else:
-                suggestion = guess_command(command, sub_command)
-                if suggestion:
-                    warning(f"Unknown command '{command} {sub_command or ''}'. Did you mean '{suggestion}'?")
+                suggestions = guess_command(command, sub_command)
+                if suggestions:
+                    show_suggestions(command, suggestions)
                 else:
                     error("Unknown command. Type 'help' to see available commands.")
-
 
     except KeyboardInterrupt:
         warning("\nProgram interrupted by user (Ctrl+C).")
@@ -119,6 +121,7 @@ def main():
         save_data({'contacts': book, 'notes': notebook})
         success(f"All data saved to [bold]{FILENAME}[/].")
         rule("Goodbye 👋")
+
 
 if __name__ == "__main__":
     main()

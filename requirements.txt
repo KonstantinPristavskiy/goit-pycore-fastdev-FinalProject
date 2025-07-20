@@ -1,0 +1,5 @@
+-e git+https://github.com/KonstantinPristavskiy/goit-pycore-fastdev-FinalProject.git@50eaa44633fed348cb01117b1e4e9d4d9e607cd9#egg=classbot
+markdown-it-py==3.0.0
+mdurl==0.1.2
+Pygments==2.19.2
+rich==14.0.0
