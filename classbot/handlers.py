@@ -1,7 +1,7 @@
 from classbot.address_book import Record, AddressBook
 from classbot.decorators import input_error
 from classbot.notebook import Note, NoteBook
-from classbot.console import success, info, error
+from classbot.console import console, success, info, error, Table, Columns 
 import shlex
 
 @input_error
@@ -70,7 +70,9 @@ def contact_get(args, book: AddressBook):
     if first_arg == 'all':
         if not book.data:
             return info("Address book is empty")
-        return '\n'.join(str(record) for record in book.data.values())
+        console.print(f"[bold green]Total contacts: {len(book.data)}[/bold green]")
+        display_contacts(book)
+        return ""
     
     # Показати дні народження
     if first_arg == 'birthdays':
@@ -95,6 +97,24 @@ def contact_get(args, book: AddressBook):
         return success("Found contacts:\n" + "\n".join(str(r) for r in results))
     
     return error(f"Contact '{name}' not found")
+
+def display_contacts(book):
+    """Виводить всі контакти у вигляді таблиці."""
+    table = Table(title="📒 Address Book", show_lines=True)
+    table.add_column("👤 Name", style="bold cyan", no_wrap=True)
+    table.add_column("📱 Phone(s)", style="white")
+    table.add_column("📧 Email", style="magenta")
+    table.add_column("🎂 Birthday", style="yellow")
+    table.add_column("🏡 Address", style="green")
+
+    for record in sorted(book.data.values(), key=lambda r: r.name.value.lower()):
+        phones = ", ".join(p.value for p in record.phones) or "-"
+        email = record.email.value if record.email else "-"
+        birthday = record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "-"
+        address = record.address.value if record.address else "-"
+        table.add_row(record.name.value, phones, email, birthday, address)
+
+    console.print(table)
 
 @input_error
 def contact_delete(args, book: AddressBook):
@@ -216,36 +236,46 @@ def note_get(args, notebook: NoteBook):
     """
     if not args:
         return error("Usage: note get <all|title|search|tag> [value]")
-    
-    command = args[0].lower().strip('"')  # Видаляємо лапки
-    
+
+    command = args[0].lower().strip('"')
+
     if command == "all":
         if not notebook.notes:
             return info("No notes found")
-        return '\n'.join(str(note) for note in notebook.notes.values())
-    
+        console.rule("[bold magenta]🗂 All Notes")
+        notes = [note.__rich__() for note in notebook.notes.values()]
+        console.print(Columns(notes, equal=True, expand=True))
+        return ""
+
     elif command == "search" and len(args) > 1:
-        query = args[1].strip('"')  # Видаляємо лапки
+        query = args[1].strip('"')
         results = notebook.search_by_content(query)
         if results:
-            return success(f"Found {len(results)} note(s):\n" + '\n'.join(str(note) for note in results))
+            console.rule(f"[bold yellow]🔍 Found {len(results)} note(s)")
+            for note in results:
+                console.print(note)
+                console.print()
+            return ""
         return info(f"No notes found for query '{query}'")
-    
+
     elif command == "tag" and len(args) > 1:
-        tag = args[1].strip('"')  # Видаляємо лапки
+        tag = args[1].strip('"')
         results = notebook.search_by_tags(tag)
         if results:
-            return success(f"Notes with tag '#{tag}':\n" + '\n'.join(str(note) for note in results))
+            console.rule(f"[bold green]🏷 Notes with tag #{tag}")
+            for note in results:
+                console.print(note)
+                console.print()
+            return ""
         return info(f"No notes found with tag '#{tag}'")
-    
+
     else:
-        # Пошук конкретної нотатки
-        title = args[0].strip('"')  # Видаляємо лапки
+        title = args[0].strip('"')
         note = notebook.find_note(title)
         if note:
-            note.display()
+            console.rule(f"[bold blue]📝 Note: {title}")
+            console.print(note)
             return ""
-
         return error(f"Note '{title}' not found")
 
 @input_error
